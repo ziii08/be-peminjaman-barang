@@ -19,6 +19,62 @@ class Transaksi extends Model
 
     protected $casts = [
         'waktu_pinjam' => 'datetime',
-        'waktu_kembali' => 'datetime'
+        'waktu_kembali' => 'datetime',
     ];
+
+    // Accessor untuk format tanggal
+    public function getWaktuPinjamFormattedAttribute()
+    {
+        return $this->waktu_pinjam->format('d/m/Y H:i');
+    }
+
+    public function getWaktuKembaliFormattedAttribute()
+    {
+        return $this->waktu_kembali ? $this->waktu_kembali->format('d/m/Y H:i') : '-';
+    }
+
+    // Accessor untuk durasi
+    public function getDurasiAttribute()
+    {
+        if ($this->status == 'aktif') {
+            $diff = $this->waktu_pinjam->diffInDays(now());
+            if ($diff == 0) {
+                $hours = $this->waktu_pinjam->diffInHours(now());
+                return $hours . ' jam yang lalu';
+            } else {
+                return $diff . ' hari yang lalu';
+            }
+        } else {
+            if ($this->waktu_kembali) {
+                $diff = $this->waktu_pinjam->diffInDays($this->waktu_kembali);
+                if ($diff == 0) {
+                    $hours = $this->waktu_pinjam->diffInHours($this->waktu_kembali);
+                    return $hours . ' jam';
+                } else {
+                    return $diff . ' hari';
+                }
+            }
+        }
+        return '-';
+    }
+
+    // Scope untuk filter
+    public function scopeByDateRange($query, $from, $to)
+    {
+        if ($from) {
+            $query->whereDate('waktu_pinjam', '>=', $from);
+        }
+        if ($to) {
+            $query->whereDate('waktu_pinjam', '<=', $to);
+        }
+        return $query;
+    }
+
+    public function scopeByStatus($query, $status)
+    {
+        if ($status) {
+            return $query->where('status', $status);
+        }
+        return $query;
+    }
 }

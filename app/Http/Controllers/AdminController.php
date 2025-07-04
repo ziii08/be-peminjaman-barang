@@ -28,9 +28,14 @@ class AdminController extends Controller
             $query->where('status', $request->status);
         }
 
-        $transaksis = $query->orderBy('waktu_pinjam', 'desc')->paginate(20);
+        $transaksis = $query->orderBy('waktu_pinjam', 'desc')->paginate(10);
 
-        return view('admin.dashboard', compact('transaksis'));
+        // Statistik
+        $totalTransaksi = Transaksi::count();
+        $sedangDipinjam = Transaksi::where('status', 'aktif')->count();
+        $sudahKembali = Transaksi::where('status', 'kembali')->count();
+
+        return view('admin.dashboard', compact('transaksis', 'totalTransaksi', 'sedangDipinjam', 'sudahKembali'));
     }
 
     public function exportExcel(Request $request)
