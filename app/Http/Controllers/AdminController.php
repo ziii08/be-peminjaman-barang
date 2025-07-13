@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaksi;
+use App\Models\Barang;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\TransaksiExport;
@@ -12,7 +13,7 @@ class AdminController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Transaksi::query();
+        $query = Transaksi::with('barang');
 
         // Filter berdasarkan tanggal
         if ($request->filled('tanggal_dari')) {
@@ -34,8 +35,17 @@ class AdminController extends Controller
         $totalTransaksi = Transaksi::count();
         $sedangDipinjam = Transaksi::where('status', 'aktif')->count();
         $sudahKembali = Transaksi::where('status', 'kembali')->count();
+        $totalBarang = Barang::count();
+        $barangTersedia = Barang::where('status', 'tersedia')->count();
 
-        return view('admin.dashboard', compact('transaksis', 'totalTransaksi', 'sedangDipinjam', 'sudahKembali'));
+        return view('admin.dashboard', compact(
+            'transaksis', 
+            'totalTransaksi', 
+            'sedangDipinjam', 
+            'sudahKembali',
+            'totalBarang',
+            'barangTersedia'
+        ));
     }
 
     public function exportExcel(Request $request)

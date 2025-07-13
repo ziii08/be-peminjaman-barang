@@ -332,294 +332,216 @@
 </head>
 
 <body>
-    <!-- Header -->
-    {{-- <div class="main-header">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12 text-center">
-                    <h1>
-                        <i class="bi bi-clipboard-data me-2"></i>
-                        Dashboard Peminjaman
-                    </h1>
-                    <p class="subtitle">Kelola data transaksi peminjaman barang dengan mudah</p>
+    @extends('layouts.admin')
+
+    @section('title', 'Dashboard')
+
+    @section('content')
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="modern-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-clipboard-data text-primary" style="font-size: 2rem;"></i>
+                    <h4 class="mt-2 mb-0 text-primary">{{ number_format($totalTransaksi) }}</h4>
+                    <small class="text-muted">Total Transaksi</small>
                 </div>
             </div>
         </div>
-    </div> --}}
-
-    <!-- Navbar -->
-    <nav class="main-header navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ route('admin.dashboard') }}">
-                <i class="bi bi-box-seam me-2"></i>Sistem Peminjaman Barang
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle me-1"></i>{{ Auth::user()->name }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="dropdown-item">
-                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="modern-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-clock text-warning" style="font-size: 2rem;"></i>
+                    <h4 class="mt-2 mb-0 text-warning">{{ number_format($sedangDipinjam) }}</h4>
+                    <small class="text-muted">Sedang Dipinjam</small>
+                </div>
             </div>
         </div>
-    </nav>
-
-    <div class="container-fluid px-3">
-        <!-- Statistics Cards -->
-        <div class="stats-container">
-            <div class="stat-card">
-                <div class="stat-number">{{ number_format($totalTransaksi) }}</div>
-                <div class="stat-label">Total Transaksi</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">{{ number_format($sedangDipinjam) }}</div>
-                <div class="stat-label">Sedang Dipinjam</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">{{ number_format($sudahKembali) }}</div>
-                <div class="stat-label">Sudah Kembali</div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="modern-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                    <h4 class="mt-2 mb-0 text-success">{{ number_format($sudahKembali) }}</h4>
+                    <small class="text-muted">Sudah Kembali</small>
+                </div>
             </div>
         </div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="modern-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-box text-info" style="font-size: 2rem;"></i>
+                    <h4 class="mt-2 mb-0 text-info">{{ number_format($totalBarang ?? 0) }}</h4>
+                    <small class="text-muted">Total Barang</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="modern-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-check2-square text-success" style="font-size: 2rem;"></i>
+                    <h4 class="mt-2 mb-0 text-success">{{ number_format($barangTersedia ?? 0) }}</h4>
+                    <small class="text-muted">Barang Tersedia</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="modern-card">
+                <div class="card-body text-center">
+                    <a href="{{ route('admin.transaksi.create') }}" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-plus-circle me-1"></i>Pinjam Barang
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Data Table -->
-        <div class="modern-card">
-            <div class="card-header-modern">
-                <h5><i class="bi bi-table me-2"></i>Data Transaksi</h5>
-                <div class="header-actions">
-                    <button type="button" class="btn btn-sm-modern btn-filter" data-bs-toggle="modal"
-                        data-bs-target="#filterModal">
-                        <i class="bi bi-funnel me-1"></i>Filter
+    <!-- Data Table -->
+    <div class="modern-card">
+        <div class="card-header-modern">
+            <h5><i class="bi bi-table me-2"></i>Data Transaksi Terbaru</h5>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                    <i class="bi bi-funnel me-1"></i>Filter
+                </button>
+                <form action="{{ route('admin.export.excel') }}" method="GET" class="d-inline">
+                    @if(request('tanggal_dari'))
+                        <input type="hidden" name="tanggal_dari" value="{{ request('tanggal_dari') }}">
+                    @endif
+                    @if(request('tanggal_sampai'))
+                        <input type="hidden" name="tanggal_sampai" value="{{ request('tanggal_sampai') }}">
+                    @endif
+                    @if(request('status'))
+                        <input type="hidden" name="status" value="{{ request('status') }}">
+                    @endif
+                    <button type="submit" class="btn btn-sm btn-success">
+                        <i class="bi bi-file-earmark-excel me-1"></i>Excel
                     </button>
-                    <form action="{{ route('admin.export.excel') }}" method="GET" class="d-inline">
-                        @if (request('tanggal_dari'))
-                            <input type="hidden" name="tanggal_dari" value="{{ request('tanggal_dari') }}">
-                        @endif
-                        @if (request('tanggal_sampai'))
-                            <input type="hidden" name="tanggal_sampai" value="{{ request('tanggal_sampai') }}">
-                        @endif
-                        @if (request('status'))
-                            <input type="hidden" name="status" value="{{ request('status') }}">
-                        @endif
-                        <button type="submit" class="btn btn-sm-modern btn-excel">
-                            <i class="bi bi-file-earmark-excel me-1"></i>Excel
-                        </button>
-                    </form>
-                    <form action="{{ route('admin.export.pdf') }}" method="GET" class="d-inline">
-                        @if (request('tanggal_dari'))
-                            <input type="hidden" name="tanggal_dari" value="{{ request('tanggal_dari') }}">
-                        @endif
-                        @if (request('tanggal_sampai'))
-                            <input type="hidden" name="tanggal_sampai" value="{{ request('tanggal_sampai') }}">
-                        @endif
-                        @if (request('status'))
-                            <input type="hidden" name="status" value="{{ request('status') }}">
-                        @endif
-                        <button type="submit" class="btn btn-sm-modern btn-pdf">
-                            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
-                        </button>
-                    </form>
-                </div>
+                </form>
+                <form action="{{ route('admin.export.pdf') }}" method="GET" class="d-inline">
+                    @if(request('tanggal_dari'))
+                        <input type="hidden" name="tanggal_dari" value="{{ request('tanggal_dari') }}">
+                    @endif
+                    @if(request('tanggal_sampai'))
+                        <input type="hidden" name="tanggal_sampai" value="{{ request('tanggal_sampai') }}">
+                    @endif
+                    @if(request('status'))
+                        <input type="hidden" name="status" value="{{ request('status') }}">
+                    @endif
+                    <button type="submit" class="btn btn-sm btn-danger">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                    </button>
+                </form>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-modern mb-0">
-                        <thead>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>NO</th>
+                            <th>Kode Barang</th>
+                            <th>Nama Barang</th>
+                            <th>Nama Peminjam</th>
+                            <th>Waktu Pinjam</th>
+                            <th>Waktu Kembali</th>
+                            <th>Status</th>
+                            <th>Durasi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($transaksis as $index => $transaksi)
                             <tr>
-                                <th>NO</th>
-                                <th>Kode Barang</th>
-                                <th>Nama Peminjam</th>
-                                <th>Waktu Pinjam</th>
-                                <th>Waktu Kembali</th>
-                                <th>Status</th>
-                                <th>Durasi</th>
+                                <td><strong>{{ $transaksis->firstItem() + $index }}</strong></td>
+                                <td><span class="badge bg-secondary">{{ $transaksi->kode_barang }}</span></td>
+                                <td>{{ $transaksi->barang->nama_barang ?? 'Barang tidak ditemukan' }}</td>
+                                <td>{{ $transaksi->nama_peminjam }}</td>
+                                <td>{{ $transaksi->waktu_pinjam->format('d/m/Y H:i') }}</td>
+                                <td>
+                                    @if($transaksi->waktu_kembali)
+                                        {{ $transaksi->waktu_kembali->format('d/m/Y H:i') }}
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($transaksi->status == 'aktif')
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-clock me-1"></i>Aktif
+                                        </span>
+                                    @else
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>Kembali
+                                        </span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($transaksi->waktu_kembali)
+                                        {{ $transaksi->waktu_pinjam->diffForHumans($transaksi->waktu_kembali, true) }}
+                                    @else
+                                        {{ $transaksi->waktu_pinjam->diffForHumans() }}
+                                    @endif
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($transaksis as $index => $transaksi)
-                                <tr>
-                                    <td><strong>{{ $transaksis->firstItem() + $index }}</strong></td>
-                                    <td><span class="code-highlight">{{ $transaksi->kode_barang }}</span></td>
-                                    <td>{{ $transaksi->nama_peminjam }}</td>
-                                    <td>{{ $transaksi->waktu_pinjam->format('d/m/Y H:i') }}</td>
-                                    <td>
-                                        @if ($transaksi->waktu_kembali)
-                                            {{ $transaksi->waktu_kembali->format('d/m/Y H:i') }}
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if ($transaksi->status == 'aktif')
-                                            <span class="status-badge status-active">
-                                                <i class="bi bi-clock"></i>Aktif
-                                            </span>
-                                        @else
-                                            <span class="status-badge status-returned">
-                                                <i class="bi bi-check-circle"></i>Kembali
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if ($transaksi->waktu_kembali)
-                                            {{ $transaksi->waktu_pinjam->diffForHumans($transaksi->waktu_kembali, true) }}
-                                        @else
-                                            {{ $transaksi->waktu_pinjam->diffForHumans() }}
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="empty-state">
-                                        <i class="bi bi-inbox"></i>
-                                        <p>Tidak ada data transaksi yang ditemukan.</p>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination with limited page numbers -->
-                @if ($transaksis->hasPages())
-                    <div class="d-flex justify-content-center p-3">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination">
-                                {{-- Previous Page Link --}}
-                                @if ($transaksis->onFirstPage())
-                                    <li class="page-item disabled">
-                                        <span class="page-link"><i class="bi bi-chevron-left"></i></span>
-                                    </li>
-                                @else
-                                    <li class="page-item">
-                                        <a class="page-link" href="{{ $transaksis->previousPageUrl() }}"
-                                            aria-label="Previous">
-                                            <i class="bi bi-chevron-left"></i>
-                                        </a>
-                                    </li>
-                                @endif
-
-                                {{-- Show only 5 pages around current page --}}
-                                @php
-                                    $start = max(1, $transaksis->currentPage() - 2);
-                                    $end = min($start + 4, $transaksis->lastPage());
-                                    $start = max(1, $end - 4);
-                                @endphp
-
-                                @if ($start > 1)
-                                    <li class="page-item">
-                                        <a class="page-link" href="{{ $transaksis->url(1) }}">1</a>
-                                    </li>
-                                    @if ($start > 2)
-                                        <li class="page-item disabled">
-                                            <span class="page-link">...</span>
-                                        </li>
-                                    @endif
-                                @endif
-
-                                @for ($i = $start; $i <= $end; $i++)
-                                    <li class="page-item {{ $i == $transaksis->currentPage() ? 'active' : '' }}">
-                                        <a class="page-link"
-                                            href="{{ $transaksis->url($i) }}">{{ $i }}</a>
-                                    </li>
-                                @endfor
-
-                                @if ($end < $transaksis->lastPage())
-                                    @if ($end < $transaksis->lastPage() - 1)
-                                        <li class="page-item disabled">
-                                            <span class="page-link">...</span>
-                                        </li>
-                                    @endif
-                                    <li class="page-item">
-                                        <a class="page-link"
-                                            href="{{ $transaksis->url($transaksis->lastPage()) }}">{{ $transaksis->lastPage() }}</a>
-                                    </li>
-                                @endif
-
-                                {{-- Next Page Link --}}
-                                @if ($transaksis->hasMorePages())
-                                    <li class="page-item">
-                                        <a class="page-link" href="{{ $transaksis->nextPageUrl() }}"
-                                            aria-label="Next">
-                                            <i class="bi bi-chevron-right"></i>
-                                        </a>
-                                    </li>
-                                @else
-                                    <li class="page-item disabled">
-                                        <span class="page-link"><i class="bi bi-chevron-right"></i></span>
-                                    </li>
-                                @endif
-                            </ul>
-                        </nav>
-                    </div>
-                @endif
-
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.5;"></i>
+                                    <p class="text-muted mt-2">Tidak ada data transaksi yang ditemukan.</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
+
+            <!-- Pagination -->
+            @if($transaksis->hasPages())
+                <div class="d-flex justify-content-center p-3">
+                    {{ $transaksis->links() }}
+                </div>
+            @endif
         </div>
     </div>
 
     <!-- Filter Modal -->
-    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal fade" id="filterModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="filterModalLabel">
-                        <i class="bi bi-funnel me-2"></i>Filter Data Transaksi
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">Filter Data Transaksi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <form id="filterForm" action="{{ route('admin.dashboard') }}" method="GET">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="tanggal_dari" class="form-label fw-semibold">Tanggal Dari</label>
-                                <input type="date" class="form-control" id="tanggal_dari" name="tanggal_dari"
-                                    value="{{ request('tanggal_dari') }}">
+                <form method="GET" action="{{ route('admin.dashboard') }}">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tanggal Dari</label>
+                                <input type="date" class="form-control" name="tanggal_dari" value="{{ request('tanggal_dari') }}">
                             </div>
-                            <div class="col-md-6">
-                                <label for="tanggal_sampai" class="form-label fw-semibold">Tanggal Sampai</label>
-                                <input type="date" class="form-control" id="tanggal_sampai" name="tanggal_sampai"
-                                    value="{{ request('tanggal_sampai') }}">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tanggal Sampai</label>
+                                <input type="date" class="form-control" name="tanggal_sampai" value="{{ request('tanggal_sampai') }}">
                             </div>
-                            <div class="col-12">
-                                <label for="status" class="form-label fw-semibold">Status</label>
-                                <select class="form-select" id="status" name="status">
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" name="status">
                                     <option value="">Semua Status</option>
-                                    <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif
-                                    </option>
-                                    <option value="kembali" {{ request('status') == 'kembali' ? 'selected' : '' }}>
-                                        Kembali</option>
+                                    <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                                    <option value="kembali" {{ request('status') == 'kembali' ? 'selected' : '' }}>Kembali</option>
                                 </select>
                             </div>
                         </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary-modern" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-secondary-modern" onclick="resetFilter()">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
-                    </button>
-                    <button type="button" class="btn btn-primary-modern text-white" onclick="applyFilter()">
-                        <i class="bi bi-search me-1"></i>Terapkan Filter
-                    </button>
-                </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        <button type="submit" class="btn btn-primary">Terapkan Filter</button>
+                        <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary">Reset</a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+    @endsection
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>

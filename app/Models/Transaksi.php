@@ -22,6 +22,12 @@ class Transaksi extends Model
         'waktu_kembali' => 'datetime',
     ];
 
+    // Relasi dengan barang
+    public function barang()
+    {
+        return $this->belongsTo(Barang::class, 'kode_barang', 'kode_barang');
+    }
+
     // Accessor untuk format tanggal
     public function getWaktuPinjamFormattedAttribute()
     {
@@ -33,7 +39,6 @@ class Transaksi extends Model
         return $this->waktu_kembali ? $this->waktu_kembali->format('d/m/Y H:i') : '-';
     }
 
-    // Accessor untuk durasi
     public function getDurasiAttribute()
     {
         if ($this->status == 'aktif') {
@@ -58,7 +63,6 @@ class Transaksi extends Model
         return '-';
     }
 
-    // Scope untuk filter
     public function scopeByDateRange($query, $from, $to)
     {
         if ($from) {
