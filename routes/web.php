@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BarangController;
+use App\Http\Controllers\KategoriBarangController;
 use App\Http\Controllers\TransaksiController;
 
 // Authentication Routes
@@ -22,6 +23,17 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/export-excel', [AdminController::class, 'exportExcel'])->name('admin.export.excel');
     Route::get('/export-pdf', [AdminController::class, 'exportPdf'])->name('admin.export.pdf');
     
+    // Kategori Barang Management
+    Route::resource('kategori', KategoriBarangController::class)->names([
+        'index' => 'admin.kategori.index',
+        'create' => 'admin.kategori.create',
+        'store' => 'admin.kategori.store',
+        'show' => 'admin.kategori.show',
+        'edit' => 'admin.kategori.edit',
+        'update' => 'admin.kategori.update',
+        'destroy' => 'admin.kategori.destroy'
+    ]);
+    
     // Barang Management
     Route::resource('barang', BarangController::class)->names([
         'index' => 'admin.barang.index',
@@ -33,6 +45,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         'destroy' => 'admin.barang.destroy'
     ]);
     Route::get('/barang-search', [BarangController::class, 'search'])->name('admin.barang.search');
+    Route::get('/barang/{barang}/barcode', [BarangController::class, 'generateBarcode'])->name('admin.barang.barcode');
     
     // Transaksi Management
     Route::resource('transaksi', TransaksiController::class)->names([

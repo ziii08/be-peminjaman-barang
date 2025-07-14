@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barang;
+use App\Models\KategoriBarang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -10,51 +11,64 @@ class BarangController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Barang::query();
+        $query = Barang::with('kategori');
         
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('kode_barang', 'like', "%{$search}%")
                   ->orWhere('nama_barang', 'like', "%{$search}%")
-                  ->orWhere('kategori', 'like', "%{$search}%");
+                  ->orWhere('merk', 'like', "%{$search}%")
+                  ->orWhere('model', 'like', "%{$search}%")
+                  ->orWhere('serial_number', 'like', "%{$search}%");
             });
         }
         
-        if ($request->filled('kategori')) {
-            $query->where('kategori', $request->kategori);
+        if ($request->filled('kategori_id')) {
+            $query->where('kategori_id', $request->kategori_id);
         }
         
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
         
-        $barangs = $query->orderBy('created_at', 'desc')->paginate(10);
-        $kategoris = Barang::distinct()->pluck('kategori')->filter();
+        if ($request->filled('kondisi')) {
+            $query->where('kondisi', $request->kondisi);
+        }
+        
+        $barangs = $query->orderBy('created_at', 'desc')->paginate(15);
+        $kategoris = KategoriBarang::orderBy('nama_kategori')->get();
         
         return view('admin.barang.index', compact('barangs', 'kategoris'));
     }
     
     public function create()
     {
-        return view('admin.barang.create');
+        $kategoris = KategoriBarang::orderBy('nama_kategori')->get();
+        return view('admin.barang.create', compact('kategoris'));
     }
     
     public function store(Request $request)
     {
         $request->validate([
-            'kode_barang' => 'required|unique:barangs,kode_barang',
+            'kategori_id' => 'required|exists:kategori_barangs,id',
             'nama_barang' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
-            'kategori' => 'nullable|string|max:100',
-            'stok_total' => 'required|integer|min:1',
+            'merk' => 'nullable|string|max:100',
+            'model' => 'nullable|string|max:100',
+            'serial_number' => 'nullable|string|max:100',
+            'tahun_pembelian' => 'nullable|integer|min:1900|max:' . date('Y'),
+            'harga_beli' => 'nullable|numeric|min:0',
             'kondisi' => 'required|in:baik,rusak,maintenance',
             'lokasi' => 'nullable|string|max:255',
-            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'catatan' => 'nullable|string'
         ]);
         
         $data = $request->all();
-        $data['stok_tersedia'] = $request->stok_total;
+        
+        // Generate kode barang otomatis
+        $data['kode_barang'] = Barang::generateKodeBarang($request->kategori_id);
         
         if ($request->hasFile('foto')) {
             $data['foto'] = $request->file('foto')->store('barang', 'public');
@@ -63,47 +77,46 @@ class BarangController extends Controller
         Barang::create($data);
         
         return redirect()->route('admin.barang.index')
-                        ->with('success', 'Barang berhasil ditambahkan!');
+                        ->with('success', 'Barang berhasil ditambahkan dengan kode: ' . $data['kode_barang']);
     }
     
     public function show(Barang $barang)
     {
+        $barang->load('kategori');
         $transaksis = $barang->transaksis()->orderBy('waktu_pinjam', 'desc')->paginate(5);
         return view('admin.barang.show', compact('barang', 'transaksis'));
     }
     
     public function edit(Barang $barang)
     {
-        return view('admin.barang.edit', compact('barang'));
+        $kategoris = KategoriBarang::orderBy('nama_kategori')->get();
+        return view('admin.barang.edit', compact('barang', 'kategoris'));
     }
     
     public function update(Request $request, Barang $barang)
     {
         $request->validate([
-            'kode_barang' => 'required|unique:barangs,kode_barang,' . $barang->id,
+            'kategori_id' => 'required|exists:kategori_barangs,id',
             'nama_barang' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
-            'kategori' => 'nullable|string|max:100',
-            'stok_total' => 'required|integer|min:1',
+            'merk' => 'nullable|string|max:100',
+            'model' => 'nullable|string|max:100',
+            'serial_number' => 'nullable|string|max:100',
+            'tahun_pembelian' => 'nullable|integer|min:1900|max:' . date('Y'),
+            'harga_beli' => 'nullable|numeric|min:0',
             'kondisi' => 'required|in:baik,rusak,maintenance',
             'lokasi' => 'nullable|string|max:255',
-            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'catatan' => 'nullable|string'
         ]);
         
         $data = $request->all();
         
         if ($request->hasFile('foto')) {
-            // Hapus foto lama
             if ($barang->foto) {
                 Storage::disk('public')->delete($barang->foto);
             }
             $data['foto'] = $request->file('foto')->store('barang', 'public');
-        }
-        
-        // Update stok tersedia jika stok total berubah
-        if ($request->stok_total != $barang->stok_total) {
-            $selisih = $request->stok_total - $barang->stok_total;
-            $data['stok_tersedia'] = max(0, $barang->stok_tersedia + $selisih);
         }
         
         $barang->update($data);
@@ -114,13 +127,11 @@ class BarangController extends Controller
     
     public function destroy(Barang $barang)
     {
-        // Cek apakah ada transaksi aktif
-        if ($barang->transaksiAktif()->count() > 0) {
+        if ($barang->transaksiAktif) {
             return redirect()->route('admin.barang.index')
                             ->with('error', 'Tidak dapat menghapus barang yang sedang dipinjam!');
         }
         
-        // Hapus foto
         if ($barang->foto) {
             Storage::disk('public')->delete($barang->foto);
         }
@@ -134,14 +145,20 @@ class BarangController extends Controller
     public function search(Request $request)
     {
         $query = $request->get('q');
-        $barangs = Barang::where('kode_barang', 'like', "%{$query}%")
+        $barangs = Barang::with('kategori')
+                         ->where('kode_barang', 'like', "%{$query}%")
                          ->orWhere('nama_barang', 'like', "%{$query}%")
                          ->where('status', 'tersedia')
                          ->where('kondisi', 'baik')
-                         ->where('stok_tersedia', '>', 0)
                          ->limit(10)
-                         ->get(['id', 'kode_barang', 'nama_barang', 'stok_tersedia']);
+                         ->get(['id', 'kode_barang', 'nama_barang', 'kategori_id']);
         
         return response()->json($barangs);
+    }
+    
+    public function generateBarcode(Barang $barang)
+    {
+        // Implementasi generate barcode jika diperlukan
+        return view('admin.barang.barcode', compact('barang'));
     }
 }

@@ -196,11 +196,18 @@
         <div class="sidebar-header">
             <h4><i class="bi bi-box-seam me-2"></i>Sistem Peminjaman</h4>
         </div>
+        <!-- Dalam bagian sidebar-menu, tambahkan menu kategori -->
         <nav class="sidebar-menu">
             <div class="menu-item">
                 <a href="{{ route('admin.dashboard') }}" class="menu-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <i class="bi bi-speedometer2 menu-icon"></i>
                     <span class="menu-text">Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="{{ route('admin.kategori.index') }}" class="menu-link {{ request()->routeIs('admin.kategori.*') ? 'active' : '' }}">
+                    <i class="bi bi-tags menu-icon"></i>
+                    <span class="menu-text">Kategori Barang</span>
                 </a>
             </div>
             <div class="menu-item">

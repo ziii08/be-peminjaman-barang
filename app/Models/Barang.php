@@ -11,16 +11,31 @@ class Barang extends Model
 
     protected $fillable = [
         'kode_barang',
-        'nama_barang', 
+        'kategori_id',
+        'nama_barang',
         'deskripsi',
-        'kategori',
-        'stok_total',
-        'stok_tersedia',
+        'merk',
+        'model',
+        'serial_number',
+        'tahun_pembelian',
+        'harga_beli',
         'kondisi',
         'lokasi',
         'foto',
-        'status'
+        'status',
+        'catatan'
     ];
+
+    protected $casts = [
+        'harga_beli' => 'decimal:2',
+        'tahun_pembelian' => 'integer'
+    ];
+
+    // Relasi dengan kategori
+    public function kategori()
+    {
+        return $this->belongsTo(KategoriBarang::class, 'kategori_id');
+    }
 
     // Relasi dengan transaksi
     public function transaksis()
@@ -31,37 +46,74 @@ class Barang extends Model
     // Relasi transaksi aktif
     public function transaksiAktif()
     {
-        return $this->hasMany(Transaksi::class, 'kode_barang', 'kode_barang')
-                    ->where('status', 'aktif');
+        return $this->hasOne(Transaksi::class, 'kode_barang', 'kode_barang')
+                    ->where('status', 'aktif')
+                    ->latest();
     }
 
     // Check apakah barang bisa dipinjam
     public function bisaDipinjam()
     {
         return $this->status === 'tersedia' && 
-               $this->kondisi === 'baik' && 
-               $this->stok_tersedia > 0;
+               $this->kondisi === 'baik';
     }
 
-    // Update stok saat peminjaman
-    public function kurangiStok()
+    // Update status saat peminjaman
+    public function pinjam()
     {
-        if ($this->stok_tersedia > 0) {
-            $this->decrement('stok_tersedia');
-            if ($this->stok_tersedia == 0) {
-                $this->update(['status' => 'tidak_tersedia']);
-            }
-        }
+        $this->update(['status' => 'dipinjam']);
     }
 
-    // Update stok saat pengembalian
-    public function tambahStok()
+    // Update status saat pengembalian
+    public function kembalikan()
     {
-        if ($this->stok_tersedia < $this->stok_total) {
-            $this->increment('stok_tersedia');
-            if ($this->status === 'tidak_tersedia') {
-                $this->update(['status' => 'tersedia']);
-            }
+        $this->update(['status' => 'tersedia']);
+    }
+
+    // Generate kode barang otomatis
+    public static function generateKodeBarang($kategoriId)
+    {
+        $kategori = KategoriBarang::find($kategoriId);
+        $prefix = strtoupper(substr($kategori->nama_kategori, 0, 3));
+        
+        // Cari nomor terakhir untuk kategori ini
+        $lastBarang = self::where('kategori_id', $kategoriId)
+                         ->where('kode_barang', 'like', $prefix . '%')
+                         ->orderBy('kode_barang', 'desc')
+                         ->first();
+        
+        if ($lastBarang) {
+            $lastNumber = (int) substr($lastBarang->kode_barang, 3);
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
         }
+        
+        return $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    }
+
+    // Scope untuk filter
+    public function scopeByKategori($query, $kategoriId)
+    {
+        if ($kategoriId) {
+            return $query->where('kategori_id', $kategoriId);
+        }
+        return $query;
+    }
+
+    public function scopeByStatus($query, $status)
+    {
+        if ($status) {
+            return $query->where('status', $status);
+        }
+        return $query;
+    }
+
+    public function scopeByKondisi($query, $kondisi)
+    {
+        if ($kondisi) {
+            return $query->where('kondisi', $kondisi);
+        }
+        return $query;
     }
 }
