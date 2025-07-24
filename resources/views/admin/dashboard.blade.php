@@ -574,7 +574,7 @@
 
     <!-- Filter Modal -->
     <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="filterModalLabel">
@@ -584,6 +584,26 @@
                 </div>
                 <div class="modal-body">
                     <form id="filterForm" action="{{ route('admin.dashboard') }}" method="GET">
+                        <!-- Quick Date Range Selection -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Pilihan Cepat Rentang Waktu</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setDateRange('today')">Hari Ini</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setDateRange('yesterday')">Kemarin</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setDateRange('last2days')">2 Hari Terakhir</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setDateRange('last3days')">3 Hari Terakhir</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setDateRange('thisweek')">Minggu Ini</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setDateRange('lastweek')">Minggu Lalu</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setDateRange('thismonth')">Bulan Ini</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setDateRange('lastmonth')">Bulan Lalu</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Manual Date Selection -->
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="tanggal_dari" class="form-label fw-semibold">Tanggal Dari</label>
@@ -599,10 +619,8 @@
                                 <label for="status" class="form-label fw-semibold">Status</label>
                                 <select class="form-select" id="status" name="status">
                                     <option value="">Semua Status</option>
-                                    <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif
-                                    </option>
-                                    <option value="kembali" {{ request('status') == 'kembali' ? 'selected' : '' }}>
-                                        Kembali</option>
+                                    <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                                    <option value="kembali" {{ request('status') == 'kembali' ? 'selected' : '' }}>Kembali</option>
                                 </select>
                             </div>
                         </div>
@@ -623,35 +641,69 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function setDateRange(range) {
+            const today = new Date();
+            let startDate, endDate;
+            
+            switch(range) {
+                case 'today':
+                    startDate = endDate = today;
+                    break;
+                case 'yesterday':
+                    startDate = endDate = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+                    break;
+                case 'last2days':
+                    startDate = new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000);
+                    endDate = today;
+                    break;
+                case 'last3days':
+                    startDate = new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000);
+                    endDate = today;
+                    break;
+                case 'thisweek':
+                    const dayOfWeek = today.getDay();
+                    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+                    startDate = new Date(today.setDate(diff));
+                    endDate = new Date();
+                    break;
+                case 'lastweek':
+                    const lastWeekStart = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    const dayOfLastWeek = lastWeekStart.getDay();
+                    const diffLastWeek = lastWeekStart.getDate() - dayOfLastWeek + (dayOfLastWeek === 0 ? -6 : 1);
+                    startDate = new Date(lastWeekStart.setDate(diffLastWeek));
+                    endDate = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'thismonth':
+                    startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                    endDate = today;
+                    break;
+                case 'lastmonth':
+                    startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                    endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+                    break;
+            }
+            
+            document.getElementById('tanggal_dari').value = formatDate(startDate);
+            document.getElementById('tanggal_sampai').value = formatDate(endDate);
+        }
+        
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
         function applyFilter() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
             modal.hide();
-
-            // Submit form
             document.getElementById('filterForm').submit();
         }
 
         function resetFilter() {
             document.getElementById('filterForm').reset();
-            // Redirect ke halaman tanpa filter
             window.location.href = "{{ route('admin.dashboard') }}";
         }
-
-        // Auto refresh functionality
-        {{-- function setupAutoRefresh(seconds) {
-            // Store current scroll position before refresh
-            sessionStorage.setItem('scrollPosition', window.scrollY);
-            
-            // Set timeout for refresh
-            setTimeout(function() {
-                // Get current URL with all query parameters
-                const currentUrl = window.location.href;
-                window.location.href = currentUrl;
-            }, seconds * 1000);
-        }
-        
-        // Initialize auto refresh (10 seconds)
-        setupAutoRefresh(10); --}}
     </script>
 </body>
 

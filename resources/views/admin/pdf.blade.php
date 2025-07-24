@@ -32,18 +32,37 @@
             text-align: center;
             font-size: 10px;
         }
+        .date-range {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 11px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <h2>Laporan Data Transaksi Peminjaman Barang</h2>
         <p>Tanggal: {{ date('d/m/Y') }}</p>
+        @if(request('tanggal_dari') || request('tanggal_sampai'))
+            <div class="date-range">
+                <strong>Periode: 
+                    @if(request('tanggal_dari') && request('tanggal_sampai'))
+                        {{ \Carbon\Carbon::parse(request('tanggal_dari'))->format('d/m/Y') }} - {{ \Carbon\Carbon::parse(request('tanggal_sampai'))->format('d/m/Y') }}
+                    @elseif(request('tanggal_dari'))
+                        Dari {{ \Carbon\Carbon::parse(request('tanggal_dari'))->format('d/m/Y') }}
+                    @elseif(request('tanggal_sampai'))
+                        Sampai {{ \Carbon\Carbon::parse(request('tanggal_sampai'))->format('d/m/Y') }}
+                    @endif
+                </strong>
+            </div>
+        @endif
     </div>
     
     <table>
         <thead>
             <tr>
-                <th>ID</th>
+                <th>No</th>
                 <th>Kode Barang</th>
                 <th>Nama Peminjam</th>
                 <th>Waktu Pinjam</th>
@@ -53,9 +72,9 @@
             </tr>
         </thead>
         <tbody>
-            @foreach ($transaksis as $transaksi)
+            @foreach ($transaksis as $index => $transaksi)
                 <tr>
-                    <td>{{ $transaksi->id }}</td>
+                    <td>{{ $index + 1 }}</td>
                     <td>{{ $transaksi->kode_barang }}</td>
                     <td>{{ $transaksi->nama_peminjam }}</td>
                     <td>{{ $transaksi->waktu_pinjam->format('d/m/Y H:i') }}</td>
@@ -66,7 +85,7 @@
                             -
                         @endif
                     </td>
-                    <td>{{ $transaksi->status }}</td>
+                    <td>{{ ucfirst($transaksi->status) }}</td>
                     <td>
                         @if ($transaksi->waktu_kembali)
                             {{ $transaksi->waktu_pinjam->diffForHumans($transaksi->waktu_kembali, true) }}
@@ -80,6 +99,7 @@
     </table>
     
     <div class="footer">
+        <p>Total Data: {{ count($transaksis) }} transaksi</p>
         <p>Dicetak pada: {{ date('d/m/Y H:i:s') }}</p>
     </div>
 </body>
