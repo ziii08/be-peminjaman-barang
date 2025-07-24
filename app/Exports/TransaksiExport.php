@@ -12,6 +12,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 class TransaksiExport implements FromQuery, WithHeadings, WithMapping, WithStyles
 {
     protected $query;
+    protected $counter = 0;
 
     public function __construct($query)
     {
@@ -26,7 +27,7 @@ class TransaksiExport implements FromQuery, WithHeadings, WithMapping, WithStyle
     public function headings(): array
     {
         return [
-            'ID',
+            'No',
             'Kode Barang',
             'Nama Peminjam',
             'Waktu Pinjam',
@@ -38,13 +39,15 @@ class TransaksiExport implements FromQuery, WithHeadings, WithMapping, WithStyle
 
     public function map($transaksi): array
     {
+        $this->counter++;
+        
         $durasi = '';
         if ($transaksi->waktu_kembali) {
             $durasi = $transaksi->waktu_pinjam->diffInMinutes($transaksi->waktu_kembali) . ' menit';
         }
 
         return [
-            $transaksi->id,
+            $this->counter,
             $transaksi->kode_barang,
             $transaksi->nama_peminjam,
             $transaksi->waktu_pinjam->format('d/m/Y H:i:s'),

@@ -20,6 +20,13 @@
             margin: 5px 0;
             color: #666;
         }
+        .date-range {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #333;
+            font-weight: bold;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -59,12 +66,24 @@
         <h1>LAPORAN TRANSAKSI PEMINJAMAN BARANG</h1>
         <p>Generated on: {{ date('d/m/Y H:i:s') }}</p>
         <p>Total Transaksi: {{ $transaksis->count() }}</p>
+        @if(request('tanggal_dari') || request('tanggal_sampai'))
+            <div class="date-range">
+                Periode: 
+                @if(request('tanggal_dari') && request('tanggal_sampai'))
+                    {{ \Carbon\Carbon::parse(request('tanggal_dari'))->format('d/m/Y') }} - {{ \Carbon\Carbon::parse(request('tanggal_sampai'))->format('d/m/Y') }}
+                @elseif(request('tanggal_dari'))
+                    Dari {{ \Carbon\Carbon::parse(request('tanggal_dari'))->format('d/m/Y') }}
+                @elseif(request('tanggal_sampai'))
+                    Sampai {{ \Carbon\Carbon::parse(request('tanggal_sampai'))->format('d/m/Y') }}
+                @endif
+            </div>
+        @endif
     </div>
 
     <table>
         <thead>
             <tr>
-                <th style="width: 5%">ID</th>
+                <th style="width: 5%">No</th>
                 <th style="width: 15%">Kode Barang</th>
                 <th style="width: 20%">Nama Peminjam</th>
                 <th style="width: 18%">Waktu Pinjam</th>
@@ -74,9 +93,9 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($transaksis as $transaksi)
+            @foreach($transaksis as $index => $transaksi)
             <tr>
-                <td>{{ $transaksi->id }}</td>
+                <td>{{ $index + 1 }}</td>
                 <td>{{ $transaksi->kode_barang }}</td>
                 <td>{{ $transaksi->nama_peminjam }}</td>
                 <td>{{ $transaksi->waktu_pinjam->format('d/m/Y H:i') }}</td>
